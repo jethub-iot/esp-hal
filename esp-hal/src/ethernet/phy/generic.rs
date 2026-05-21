@@ -6,7 +6,7 @@ use core::task::Context;
 
 use crate::ethernet::{
     mac::{Duplex, LinkState, Speed},
-    phy::{ANAR, ANLPAR, BMCR, BMSR, MdioDriver, Phy, PhyError, an, bmcr, bmsr},
+    phy::{ANAR, ANLPAR, BMCR, BMSR, MdioBus, Phy, PhyError, an, bmcr, bmsr},
 };
 
 /// Maximum iterations to wait for the PHY reset bit to self-clear.
@@ -31,7 +31,7 @@ impl Phy for GenericPhy {
         self.addr
     }
 
-    fn init(&mut self, mdio: &MdioDriver<'_>) -> Result<(), PhyError> {
+    fn init<M: MdioBus>(&mut self, mdio: &M) -> Result<(), PhyError> {
         // Advertise all four capabilities (10/100 half/full).
         let adv = an::BASE_10_HALF | an::BASE_10_FULL | an::BASE_100_HALF | an::BASE_100_FULL;
         // Selector field = 0b00001 (IEEE 802.3).
@@ -50,7 +50,7 @@ impl Phy for GenericPhy {
         Err(PhyError::Timeout)
     }
 
-    fn poll_link(&mut self, mdio: &MdioDriver<'_>, cx: Option<&mut Context<'_>>) -> LinkState {
+    fn poll_link<M: MdioBus>(&mut self, mdio: &M, cx: Option<&mut Context<'_>>) -> LinkState {
         if let Some(cx) = cx {
             cx.waker().wake_by_ref(); // Schedule another poll after yielding to the executor.
         }

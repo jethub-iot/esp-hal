@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- ETH: Public `MdioBus` trait abstracting Clause-22 MDIO read/write, enabling external PHY drivers and host-side mocks.
 - C5 and C61: Enable RTC timekeeping (#5449)
 - C61: usb-serial-jtag and debug-assist (#5427)
 - C61: dedicated gpio (#5426)
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- ETH (**breaking** for external `Phy` impls): `Phy::init` and `Phy::poll_link` are now generic over `M: MdioBus` instead of taking `&MdioDriver<'_>`. Existing external implementations of `Phy` must update their method signatures. `GenericPhy` is migrated. The `MdioDriver::new` constructor remains `pub(super)`, so external code can implement `Phy` against any `MdioBus` but still cannot directly construct an MDIO bus over the EMAC peripheral.
 - The clock frequency accessor functions no longer need to lock the clock tree (#5461)
 - SPI: `SpiDmaBus` has been merged into `SpiDma`. `with_buffers` now returns `SpiDma` directly, and the buffer-taking transfer methods have been renamed to `read_buffer`, `write_buffer`, `transfer_buffers`, `half_duplex_read_buffer` and `half_duplex_write_buffer` to avoid conflicts with the `SpiBus` trait methods. (#5272)
 - SPI: `SpiDma` will now skip copying into the internal buffers unless necessary (#5290)
