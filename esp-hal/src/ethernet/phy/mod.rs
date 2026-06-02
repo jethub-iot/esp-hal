@@ -127,11 +127,35 @@ impl<'a> MdioBus for MdioDriver<'a> {
 /// PHY error.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[non_exhaustive]
 pub enum PhyError {
     /// The PHY did not respond within the expected time.
     Timeout,
     /// No PHY was found on the MDIO bus during auto-address discovery.
     NotFound,
+    /// A PHY responded on the MDIO bus, but its identification register
+    /// value did not match the chip family the driver supports.
+    ///
+    /// The `id` field carries the full 32-bit Clause 22 PHY identifier
+    /// (`PHYIDR1 << 16 | PHYIDR2`) so consumers can log or report the
+    /// unknown silicon for diagnostics.
+    UnsupportedChip {
+        /// 32-bit Clause 22 PHY identifier read from the chip.
+        id: u32,
+    },
+    /// The chip family matched, but a runtime-detected SKU or package
+    /// variant (typically read from a strap-configured register) is not
+    /// supported by the driver.
+    ///
+    /// Reported by drivers whose family covers more than one silicon SKU
+    /// and which discriminate the concrete part at runtime — e.g. the
+    /// LAN867x family via `STRAP_CTRL0.PKGTYP`.
+    UnsupportedPackage {
+        /// Raw strap-register value the driver could not decode,
+        /// zero-extended to 32 bits for forward-compatibility with chips
+        /// that expose wider strap windows.
+        strap: u32,
+    },
 }
 
 /// Ethernet PHY driver.
